@@ -10,18 +10,24 @@ extension KeyboardShortcuts.Name {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var panel: FloatingPanel?
-    private var monitor: ClipboardMonitor?
+    private var clipMonitor: ClipboardMonitor?
+    private var hotEdge: HotEdgeTrigger?
     private var modelContainer: ModelContainer?
 
     // App active AVANT l'ouverture du panel — pour Direct Paste
     private var previousApp: NSRunningApplication?
 
+    // Dimensions et position du panel (bas-gauche, au-dessus du Dock)
+    private let panelWidth:  CGFloat = 420
+    private let panelHeight: CGFloat = 560
+    private let panelMarginLeft: CGFloat = 0   // collé au bord gauche
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-
         setupModelContainer()
         setupStatusItem()
         setupClipboardMonitor()
+        setupHotEdgeTrigger()
         setupHotkey()
         requestAccessibilityIfNeeded()
     }
@@ -43,11 +49,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupClipboardMonitor() {
-        monitor = ClipboardMonitor()
-        monitor?.onNewItem = { [weak self] data in
+        clipMonitor = ClipboardMonitor()
+        clipMonitor?.onNewItem = { [weak self] data in
             self?.saveClip(data)
         }
-        monitor?.start()
+        clipMonitor?.start()
+    }
+
+    private func setupHotEdgeTrigger() {
+        hotEdge = HotEdgeTrigger()
+        hotEdge?.onScrollUp = { [weak self] in
+            guard let self else { return }
+            if self.panel?.isVisible == true {
+                self.hidePanel()
+            } else {
+                self.previousApp = NSWorkspace.shared.frontmostApplication
+                self.showPanel()
+            }
+        }
+        hotEdge?.start()
     }
 
     private func setupHotkey() {
@@ -57,19 +77,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func requestAccessibilityIfNeeded() {
-        // Demande les permissions Accessibility pour pouvoir simuler ⌘V
-        let trusted = AXIsProcessTrusted()
-        if !trusted {
-            let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true]
-            AXIsProcessTrustedWithOptions(options)
-        }
+        guard !AXIsProcessTrusted() else { return }
+        let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true]
+        AXIsProcessTrustedWithOptions(options)
     }
 
     // MARK: - Panel management
 
     @objc func togglePanel() {
-        if let panel = panel, panel.isVisible {
-            panel.orderOut(nil)
+        if panel?.isVisible == true {
+            hidePanel()
         } else {
             previousApp = NSWorkspace.shared.frontmostApplication
             showPanel()
@@ -77,42 +94,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showPanel() {
-        if panel == nil, let container = modelContainer {
-            panel = FloatingPanel()
-            let view = ContentView(onPaste: { [weak self] item in
-                self?.directPaste(item)
-            })
-            .modelContainer(container)
-            panel?.contentViewController = NSHostingController(rootView: view)
-        }
+        buildPanelIfNeeded()
+        guard let panel else { return }
 
-        positionPanelNearMenuBar()
-        panel?.makeKeyAndOrderFront(nil)
-        panel?.orderFrontRegardless()
+        let finalFrame = panelFrame()
+
+        // Départ : panel caché sous le bord bas de l'écran
+        let startFrame = NSRect(
+            x: finalFrame.minX,
+            y: finalFrame.minY - finalFrame.height,
+            width: finalFrame.width,
+            height: finalFrame.height
+        )
+
+        panel.setFrame(startFrame, display: false)
+        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+
+        // Slide-up animation
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.28
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(finalFrame, display: true)
+        }
     }
 
-    private func positionPanelNearMenuBar() {
-        guard let screen = NSScreen.main, let panel = panel else { return }
-        let screenRect = screen.visibleFrame
-        let panelWidth: CGFloat = 420
-        let panelHeight: CGFloat = 560
-        let x = (screenRect.width - panelWidth) / 2 + screenRect.minX
-        let y = screenRect.maxY - panelHeight - 8
-        panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
+    private func hidePanel() {
+        guard let panel else { return }
+        let hiddenY = panel.frame.minY - panel.frame.height
+
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.22
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            panel.animator().setFrameOrigin(NSPoint(x: panel.frame.minX, y: hiddenY))
+        }, completionHandler: {
+            panel.orderOut(nil)
+        })
+    }
+
+    // Calcule la frame finale du panel : bas-gauche, juste au-dessus du Dock
+    private func panelFrame() -> NSRect {
+        let screen = NSScreen.main ?? NSScreen.screens[0]
+        let visible = screen.visibleFrame   // exclut menu bar + Dock
+        return NSRect(
+            x: visible.minX + panelMarginLeft,
+            y: visible.minY,
+            width: panelWidth,
+            height: panelHeight
+        )
+    }
+
+    private func buildPanelIfNeeded() {
+        guard panel == nil, let container = modelContainer else { return }
+        panel = FloatingPanel()
+        let view = ContentView(onPaste: { [weak self] item in
+            self?.directPaste(item)
+        })
+        .modelContainer(container)
+        panel?.contentViewController = NSHostingController(rootView: view)
     }
 
     // MARK: - Direct Paste
 
     private func directPaste(_ item: ClipboardItem) {
-        // 1. Copier dans le presse-papier
         copyToClipboard(item)
-
-        // 2. Fermer le panel
-        panel?.orderOut(nil)
-
-        // 3. Réactiver l'app précédente et simuler ⌘V
         let appToRestore = previousApp
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+        hidePanel()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
             appToRestore?.activate()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 self.simulatePaste()
@@ -151,16 +199,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let container = modelContainer else { return }
         let context = ModelContext(container)
 
-        // Dédoublonnage : ne pas enregistrer si identique au dernier clip texte
         if data.type != .image {
             var descriptor = FetchDescriptor<ClipboardItem>(
                 sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
             )
             descriptor.fetchLimit = 1
             if let last = try? context.fetch(descriptor).first,
-               last.textContent == data.text {
-                return
-            }
+               last.textContent == data.text { return }
         }
 
         let item = ClipboardItem(
@@ -173,7 +218,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         context.insert(item)
         try? context.save()
-
         trimHistory(context: context)
     }
 

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0DE14AB7159B0BF0D768FF04 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DBE1A38BB39F7CD8AF53AD2 /* ClipboardItem.swift */; };
+		3B8C45CC9480E87F3C4A0628 /* HotEdgeTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */; };
 		3C3F0EB05BE7B984947EF66D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6078EB0E8C6C2758D0AE194F /* AppDelegate.swift */; };
 		3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0130B26A1D484B3307C03ABF /* CopyHistoryApp.swift */; };
 		4916E57803FEFDF298BA9F10 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */; };
@@ -26,6 +27,7 @@
 		4CDAAC02F81BE8A4E0D1FA0B /* CopyHistory.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CopyHistory.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6078EB0E8C6C2758D0AE194F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6DBE1A38BB39F7CD8AF53AD2 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotEdgeTrigger.swift; sourceTree = "<group>"; };
 		B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
 		D94C46A7E0CA9A2648BA247B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EA0ECD7E03C17885E116DD22 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -48,6 +50,7 @@
 			isa = PBXGroup;
 			children = (
 				B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */,
+				7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -196,6 +199,7 @@
 				CF45FA92B7B6B61F9BA5CAF0 /* ContentView.swift in Sources */,
 				3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */,
 				BEA3AA26DAAD5352D117B913 /* FloatingPanel.swift in Sources */,
+				3B8C45CC9480E87F3C4A0628 /* HotEdgeTrigger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
