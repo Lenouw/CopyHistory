@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>CopyHistory</title>
+        <link>https://github.com/Lenouw/CopyHistory</link>
+        <description>CopyHistory release notes</description>
+        <language>fr</language>
+        <item>
+            <title>Version 1.0.0</title>
+            <pubDate>Tue, 29 Apr 2026 11:00:00 +0200</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.0.0 — Première version</h3>
+                <ul>
+                    <li>Historique du presse-papiers (texte, images, fichiers, URLs)</li>
+                    <li>Panneau flottant déclenché par le bord bas de l'écran</li>
+                    <li>Raccourci clavier global (⇧⌘V)</li>
+                    <li>Collage direct avec restauration de l'application précédente</li>
+                    <li>Préférences : ignorer mots de passe, liste noire d'applications</li>
+                    <li>Mise à jour automatique via Sparkle</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.0.0/CopyHistory-1.0.0.zip"
+                sparkle:edSignature="ZSUJe9QrOnYoANNZBn6GrBoXxvV+Its93fN92yckthm0bdR0tcqp98pfL7YCgwrXcoQEl/R8vHxTnGRuU15TBw=="
+                length="1653965"
+                type="application/octet-stream"
+            />
+        </item>
+    </channel>
+</rss>

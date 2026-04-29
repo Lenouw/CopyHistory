@@ -28,7 +28,9 @@
     <string>NSApplication</string>
     <!-- Sparkle auto-update -->
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/florianbonin/CopyHistory/main/appcast.xml</string>
+    <string>https://raw.githubusercontent.com/Lenouw/CopyHistory/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>1AvZry8Dl0dM3/B2UjkbZeziG7erROR+03HNyrP8T+E=</string>
     <key>SUEnableAutomaticChecks</key>
     <true/>
     <key>SUScheduledCheckInterval</key>
