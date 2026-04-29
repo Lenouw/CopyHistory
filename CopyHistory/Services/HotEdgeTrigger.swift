@@ -1,22 +1,19 @@
 import AppKit
 
-// Surveille les scroll events dans le coin bas-gauche de l'écran.
-// Quand la souris est dans la zone chaude et que l'utilisateur fait défiler
-// vers le haut avec deux doigts, on déclenche l'action.
-// Même principe qu'Unclutter qui surveille le coin en haut.
+// Surveille les scroll events sur TOUT le bord bas de l'écran.
+// Quand la souris est dans les derniers pixels du bas (n'importe où en X)
+// et que l'utilisateur fait défiler vers le haut avec deux doigts, on déclenche.
+// Même principe qu'Unclutter qui surveille le bord haut.
 final class HotEdgeTrigger {
-    var onScrollUp: (() -> Void)?    // déclencher l'affichage
-    var onScrollDown: (() -> Void)?  // déclencher le masquage
+    var onScrollUp: (() -> Void)?
 
     private var monitor: Any?
     private var accumulator: CGFloat = 0
     private var lastTriggerTime: Date = .distantPast
 
-    // Zone chaude : x < hotX pixels depuis le bord gauche
-    // (pas de contrainte Y stricte — toute la hauteur côté gauche fonctionne,
-    //  sauf le menu bar qui reste réservé à d'autres apps)
-    private let hotZoneX: CGFloat = 50
-    private let triggerThreshold: CGFloat = 30   // delta accumulé pour déclencher
+    // Zone chaude : tout le bas de l'écran, dans les hotZoneY premiers pixels
+    private let hotZoneY: CGFloat = 5             // coller au bord bas
+    private let triggerThreshold: CGFloat = 30    // delta accumulé pour déclencher
     private let cooldown: TimeInterval = 0.8      // évite les doubles déclenchements
 
     func start() {
@@ -33,17 +30,10 @@ final class HotEdgeTrigger {
     private func handleScroll(_ event: NSEvent) {
         // mouseLocation : coordonnées écran, (0,0) en bas-gauche
         let loc = NSEvent.mouseLocation
-        guard let screen = NSScreen.main else { return }
+        guard NSScreen.main != nil else { return }
 
-        // Zone chaude : bord gauche de l'écran
-        guard loc.x < hotZoneX else {
-            accumulator = 0
-            return
-        }
-
-        // Exclure le menu bar (zone en haut)
-        let menuBarH: CGFloat = 24
-        guard loc.y < screen.frame.height - menuBarH else {
+        // Zone chaude : tout le bord bas de l'écran (y proche de 0)
+        guard loc.y <= hotZoneY else {
             accumulator = 0
             return
         }
