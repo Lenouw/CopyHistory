@@ -6,6 +6,26 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.1</title>
+            <pubDate>Wed, 29 Apr 2026 16:00:00 +0200</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.1 — Fix lancement</h3>
+                <ul>
+                    <li>🐛 Correction du blocage au lancement sur Mac vierge (Library Validation)</li>
+                    <li>L'entitlement <code>com.apple.security.cs.disable-library-validation</code> permet le chargement de Sparkle.framework sans Developer ID</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.1/CopyHistory-1.1.1.zip"
+                sparkle:edSignature="vFwWyqzOUXfc2xrCyoNHFZnmuMbF4DvLe588Kebt1xhIEsd6Br10bompFksWEVkOWDCZOnWVPlgma7sF/Y2IAA=="
+                length="1712860"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.0</title>
             <pubDate>Wed, 29 Apr 2026 14:55:00 +0200</pubDate>
             <sparkle:version>3</sparkle:version>

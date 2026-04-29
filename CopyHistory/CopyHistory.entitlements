@@ -4,5 +4,9 @@
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <false/>
+    <!-- Permet le chargement de frameworks ad-hoc (Sparkle) sans Developer ID.
+         Sans ça, Library Validation bloque le chargement de Sparkle.framework. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
 </dict>
 </plist>
