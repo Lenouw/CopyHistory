@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0DE14AB7159B0BF0D768FF04 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DBE1A38BB39F7CD8AF53AD2 /* ClipboardItem.swift */; };
+		272C8CB14240A90AE09E165C /* CryptoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AE419566432F90BBBC5433 /* CryptoStore.swift */; };
 		3B8C45CC9480E87F3C4A0628 /* HotEdgeTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */; };
 		3C3F0EB05BE7B984947EF66D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6078EB0E8C6C2758D0AE194F /* AppDelegate.swift */; };
 		3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0130B26A1D484B3307C03ABF /* CopyHistoryApp.swift */; };
@@ -34,6 +35,7 @@
 		752BF478928663EDC77EBB4B /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotEdgeTrigger.swift; sourceTree = "<group>"; };
 		B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
+		D6AE419566432F90BBBC5433 /* CryptoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoStore.swift; sourceTree = "<group>"; };
 		D94C46A7E0CA9A2648BA247B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EA0ECD7E03C17885E116DD22 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		EBD34BAE87EF9ADF925C98C1 /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
@@ -56,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */,
+				D6AE419566432F90BBBC5433 /* CryptoStore.swift */,
 				7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */,
 			);
 			path = Services;
@@ -208,6 +211,7 @@
 				4916E57803FEFDF298BA9F10 /* ClipboardMonitor.swift in Sources */,
 				CF45FA92B7B6B61F9BA5CAF0 /* ContentView.swift in Sources */,
 				3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */,
+				272C8CB14240A90AE09E165C /* CryptoStore.swift in Sources */,
 				BEA3AA26DAAD5352D117B913 /* FloatingPanel.swift in Sources */,
 				3B8C45CC9480E87F3C4A0628 /* HotEdgeTrigger.swift in Sources */,
 				8D8DDB8A9CDBC62B3F1819E7 /* IgnoredAppsView.swift in Sources */,
@@ -287,7 +291,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CopyHistory/CopyHistory.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = CopyHistory/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -295,7 +299,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.florianbonin.CopyHistory;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -308,7 +312,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CopyHistory/CopyHistory.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = CopyHistory/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -316,7 +320,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.florianbonin.CopyHistory;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;

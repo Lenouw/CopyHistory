@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         registerDefaults()
         setupModelContainer()
+        migrateLegacyClipsToEncrypted()
         setupStatusItem()
         setupClipboardMonitor()
         setupHotEdgeTrigger()
@@ -285,9 +286,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pb.clearContents()
         switch item.clipType {
         case .text, .url, .rtf, .file:
-            pb.setString(item.textContent ?? item.filePath ?? "", forType: .string)
+            pb.setString(item.decryptedText ?? item.filePath ?? "", forType: .string)
         case .image:
-            if let data = item.imageData, let img = NSImage(data: data) { pb.writeObjects([img]) }
+            if let data = item.decryptedImageData, let img = NSImage(data: data) { pb.writeObjects([img]) }
         }
     }
 
@@ -306,6 +307,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         up.post(tap: .cghidEventTap)
     }
 
+    // MARK: - Migration legacy → chiffré (1.0.x → 1.1.0)
+
+    /// Chiffre en place tous les enregistrements créés avant la 1.1.0 (qui sont en clair).
+    /// Idempotent : ne touche pas aux items déjà chiffrés.
+    private func migrateLegacyClipsToEncrypted() {
+        guard let context = saveContext else { return }
+        let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { !$0.isEncrypted })
+        guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return }
+
+        var migrated = 0
+        for item in legacy {
+            if let text = item.textContent, !text.isEmpty {
+                if let enc = CryptoStore.encryptString(text) {
+                    item.textContent = enc
+                } else { continue }
+            }
+            if let img = item.imageData, !img.isEmpty {
+                if let enc = CryptoStore.encrypt(img) {
+                    item.imageData = enc
+                } else { continue }
+            }
+            item.isEncrypted = true
+            migrated += 1
+        }
+        try? context.save()
+        if migrated > 0 {
+            NSLog("[CopyHistory] Migration : \(migrated) éléments chiffrés rétroactivement")
+        }
+    }
+
+    // MARK: - Effacer tout l'historique
+
+    /// Supprime tous les éléments de l'historique (épinglés inclus).
+    /// La clé Keychain est conservée pour ne pas casser les nouveaux items.
+    @objc func eraseAllHistory() {
+        guard let context = saveContext else { return }
+        let descriptor = FetchDescriptor<ClipboardItem>()
+        if let all = try? context.fetch(descriptor) {
+            all.forEach { context.delete($0) }
+            try? context.save()
+        }
+    }
+
     // MARK: - Persistence
 
     private func saveClip(_ data: NewClipData) {
@@ -313,7 +357,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if data.type != .image {
             var descriptor = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)])
             descriptor.fetchLimit = 1
-            if let last = try? context.fetch(descriptor).first, last.textContent == data.text { return }
+            if let last = try? context.fetch(descriptor).first, last.decryptedText == data.text { return }
         }
         let item = ClipboardItem(type: data.type, text: data.text, imageData: data.imageData,
                                   filePath: data.filePath, appBundleID: data.appBundleID, appName: data.appName)

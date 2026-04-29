@@ -121,9 +121,9 @@ struct ContentView: View {
         pb.clearContents()
         switch item.clipType {
         case .text, .url, .rtf, .file:
-            pb.setString(item.textContent ?? item.filePath ?? "", forType: .string)
+            pb.setString(item.decryptedText ?? item.filePath ?? "", forType: .string)
         case .image:
-            if let data = item.imageData, let img = NSImage(data: data) {
+            if let data = item.decryptedImageData, let img = NSImage(data: data) {
                 pb.writeObjects([img])
             }
         }

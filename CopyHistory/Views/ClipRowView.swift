@@ -47,7 +47,7 @@ struct ClipRowView: View {
 
             switch item.clipType {
             case .image:
-                if let data = item.imageData, let img = NSImage(data: data) {
+                if let data = item.decryptedImageData, let img = NSImage(data: data) {
                     Image(nsImage: img)
                         .resizable()
                         .aspectRatio(contentMode: .fit)

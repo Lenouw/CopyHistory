@@ -6,6 +6,28 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.0</title>
+            <pubDate>Wed, 29 Apr 2026 14:55:00 +0200</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.0 — Chiffrement de l'historique</h3>
+                <ul>
+                    <li>🔐 <b>Historique chiffré en AES-256-GCM</b> — clé stockée dans le Trousseau macOS, jamais sur le disque en clair</li>
+                    <li>🔄 Migration automatique : les éléments existants sont chiffrés au premier lancement</li>
+                    <li>🗑️ Nouveau bouton <b>« Effacer tout l'historique »</b> dans Préférences › Confidentialité (avec confirmation)</li>
+                    <li>📁 Lien vers le dossier de stockage depuis les Préférences</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.0/CopyHistory-1.1.0.zip"
+                sparkle:edSignature="+VkmAyYoQb0bLgglPVIFLmn7RJaj3yfzsIXG75mUDi3SH6DuEE4g48VZinqkZ+0ZUfXl2MPflXlD19FrRhmBAA=="
+                length="1712794"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.0.1</title>
             <pubDate>Wed, 29 Apr 2026 11:55:00 +0200</pubDate>
             <sparkle:version>2</sparkle:version>
