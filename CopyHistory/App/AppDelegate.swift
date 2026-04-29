@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import SwiftData
 import KeyboardShortcuts
+import Sparkle
 
 extension KeyboardShortcuts.Name {
     static let togglePanel = Self("togglePanel", default: .init(.v, modifiers: [.shift, .command]))
@@ -13,24 +14,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clipMonitor: ClipboardMonitor?
     private var hotEdge: HotEdgeTrigger?
     private var modelContainer: ModelContainer?
+    private var updaterController: SPUStandardUpdaterController?
 
-    // App active AVANT l'ouverture du panel — pour Direct Paste
     private var previousApp: NSRunningApplication?
-
     private let panelWidth:  CGFloat = 420
     private let panelHeight: CGFloat = 560
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        registerDefaults()
         setupModelContainer()
         setupStatusItem()
         setupClipboardMonitor()
         setupHotEdgeTrigger()
         setupHotkey()
+        setupSparkle()
         requestAccessibilityIfNeeded()
     }
 
     // MARK: - Setup
+
+    private func registerDefaults() {
+        UserDefaults.standard.register(defaults: ["ignorePasswords": true])
+    }
 
     private func setupModelContainer() {
         let schema = Schema([ClipboardItem.self])
@@ -42,15 +48,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         let btn = statusItem?.button
         btn?.image = NSImage(systemSymbolName: "clipboard", accessibilityDescription: "CopyHistory")
-        btn?.action = #selector(togglePanel)
+        btn?.action = #selector(statusBarButtonClicked(_:))
+        btn?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         btn?.target = self
     }
 
     private func setupClipboardMonitor() {
         clipMonitor = ClipboardMonitor()
-        clipMonitor?.onNewItem = { [weak self] data in
-            self?.saveClip(data)
-        }
+        clipMonitor?.onNewItem = { [weak self] data in self?.saveClip(data) }
         clipMonitor?.start()
     }
 
@@ -69,9 +74,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupHotkey() {
-        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
-            self?.togglePanel()
-        }
+        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in self?.togglePanel() }
+    }
+
+    private func setupSparkle() {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
     }
 
     private func requestAccessibilityIfNeeded() {
@@ -80,7 +91,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AXIsProcessTrustedWithOptions(options)
     }
 
-    // MARK: - Panel management
+    // MARK: - Status bar button
+
+    @objc private func statusBarButtonClicked(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            showContextMenu()
+        } else {
+            togglePanel()
+        }
+    }
+
+    // MARK: - Context menu (clic droit)
+
+    private func showContextMenu() {
+        let menu = NSMenu()
+
+        let prefsItem = NSMenuItem(title: "Préférences…", action: #selector(openPreferences), keyEquivalent: ",")
+        prefsItem.target = self
+        menu.addItem(prefsItem)
+
+        let updateItem = NSMenuItem(title: "Vérifier les mises à jour…", action: #selector(checkForUpdates(_:)), keyEquivalent: "")
+        updateItem.target = self
+        menu.addItem(updateItem)
+
+        menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "Quitter CopyHistory", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+
+        menu.delegate = self
+        statusItem?.menu = menu
+        statusItem?.button?.performClick(nil)
+        // menu = nil est réinitialisé dans menuDidClose (NSMenuDelegate)
+    }
+
+    @objc func openPreferences() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+
+    @objc func checkForUpdates(_ sender: Any?) {
+        updaterController?.checkForUpdates(sender)
+    }
+
+    // MARK: - Panel toggle
 
     @objc func togglePanel() {
         if panel?.isVisible == true {
@@ -92,32 +145,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // MARK: - Panel show/hide avec animation spring
+
     private func showPanel(centeredAt mouseX: CGFloat = -1) {
         buildPanelIfNeeded()
         guard let panel else { return }
 
         let finalFrame = panelFrame(centeredAt: mouseX)
-
-        // Départ : panel caché sous le bord bas de l'écran, transparent
-        let startFrame = NSRect(
-            x: finalFrame.minX,
-            y: finalFrame.minY - finalFrame.height,
-            width: finalFrame.width,
-            height: finalFrame.height
-        )
+        let startFrame = NSRect(x: finalFrame.minX, y: finalFrame.minY - finalFrame.height,
+                                width: finalFrame.width, height: finalFrame.height)
+        let overshootFrame = NSRect(x: finalFrame.minX, y: finalFrame.minY + 10,
+                                    width: finalFrame.width, height: finalFrame.height)
 
         panel.alphaValue = 0
         panel.setFrame(startFrame, display: false)
         panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
-
-        // Animation spring : slide-up rapide + léger overshoot + settle
-        let overshootFrame = NSRect(
-            x: finalFrame.minX,
-            y: finalFrame.minY + 10,
-            width: finalFrame.width,
-            height: finalFrame.height
-        )
 
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.32
@@ -144,32 +187,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.animator().setFrameOrigin(hiddenOrigin)
         }, completionHandler: {
             panel.orderOut(nil)
-            panel.alphaValue = 1  // reset pour le prochain affichage
+            panel.alphaValue = 1
         })
     }
 
-    // Calcule la frame finale du panel, centré horizontalement sur mouseX
     private func panelFrame(centeredAt mouseX: CGFloat = -1) -> NSRect {
         let screen = NSScreen.main ?? NSScreen.screens[0]
-        let visible = screen.visibleFrame  // exclut menu bar + Dock
-
-        // Centrer sur la position X de la souris (ou centrer sur l'écran si non spécifié)
+        let visible = screen.visibleFrame
         let referenceX = mouseX >= 0 ? mouseX : visible.midX
         var x = referenceX - panelWidth / 2
-
-        // Clamp pour ne pas sortir de l'écran
         x = max(visible.minX, min(x, visible.maxX - panelWidth))
-
         return NSRect(x: x, y: visible.minY, width: panelWidth, height: panelHeight)
     }
 
     private func buildPanelIfNeeded() {
         guard panel == nil, let container = modelContainer else { return }
         panel = FloatingPanel()
-        let view = ContentView(onPaste: { [weak self] item in
-            self?.directPaste(item)
-        })
-        .modelContainer(container)
+        let view = ContentView(onPaste: { [weak self] item in self?.directPaste(item) })
+            .modelContainer(container)
         panel?.contentViewController = NSHostingController(rootView: view)
     }
 
@@ -181,9 +216,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hidePanel()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
             appToRestore?.activate()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                self.simulatePaste()
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.simulatePaste() }
         }
     }
 
@@ -194,9 +227,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .text, .url, .rtf, .file:
             pb.setString(item.textContent ?? item.filePath ?? "", forType: .string)
         case .image:
-            if let data = item.imageData, let img = NSImage(data: data) {
-                pb.writeObjects([img])
-            }
+            if let data = item.imageData, let img = NSImage(data: data) { pb.writeObjects([img]) }
         }
     }
 
@@ -217,24 +248,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func saveClip(_ data: NewClipData) {
         guard let container = modelContainer else { return }
         let context = ModelContext(container)
-
         if data.type != .image {
-            var descriptor = FetchDescriptor<ClipboardItem>(
-                sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
-            )
+            var descriptor = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)])
             descriptor.fetchLimit = 1
-            if let last = try? context.fetch(descriptor).first,
-               last.textContent == data.text { return }
+            if let last = try? context.fetch(descriptor).first, last.textContent == data.text { return }
         }
-
-        let item = ClipboardItem(
-            type: data.type,
-            text: data.text,
-            imageData: data.imageData,
-            filePath: data.filePath,
-            appBundleID: data.appBundleID,
-            appName: data.appName
-        )
+        let item = ClipboardItem(type: data.type, text: data.text, imageData: data.imageData,
+                                  filePath: data.filePath, appBundleID: data.appBundleID, appName: data.appName)
         context.insert(item)
         try? context.save()
         trimHistory(context: context)
@@ -248,5 +268,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let all = try? context.fetch(descriptor), all.count > 1000 else { return }
         all.dropFirst(1000).forEach { context.delete($0) }
         try? context.save()
+    }
+}
+
+// MARK: - NSMenuDelegate : reset menu après fermeture
+
+extension AppDelegate: NSMenuDelegate {
+    func menuDidClose(_ menu: NSMenu) {
+        statusItem?.menu = nil
     }
 }

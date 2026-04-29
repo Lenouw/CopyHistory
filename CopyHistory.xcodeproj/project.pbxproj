@@ -13,20 +13,25 @@
 		3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0130B26A1D484B3307C03ABF /* CopyHistoryApp.swift */; };
 		4916E57803FEFDF298BA9F10 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */; };
 		50BA05B458E418C4DAB74833 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = A8386092706AD2908996655A /* KeyboardShortcuts */; };
+		8D8DDB8A9CDBC62B3F1819E7 /* IgnoredAppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251704ED33B9276E5F701B74 /* IgnoredAppsView.swift */; };
+		B2F4FA9062216287BD4B570E /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752BF478928663EDC77EBB4B /* PreferencesView.swift */; };
 		B5F4D93DBADA9B07AD80B4EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F1D6E1F6A233AE49D638940 /* Assets.xcassets */; };
 		BEA3AA26DAAD5352D117B913 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD34BAE87EF9ADF925C98C1 /* FloatingPanel.swift */; };
 		CF45FA92B7B6B61F9BA5CAF0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0ECD7E03C17885E116DD22 /* ContentView.swift */; };
 		EEA038248722BFAAA118E742 /* ClipRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357E8DF356E2957027C72698 /* ClipRowView.swift */; };
+		FF521212A2CA74674C08D1C4 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F338B742479E0B5196DA0334 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0130B26A1D484B3307C03ABF /* CopyHistoryApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyHistoryApp.swift; sourceTree = "<group>"; };
 		1B225D1CD1F425CC0F5ADC64 /* CopyHistory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CopyHistory.entitlements; sourceTree = "<group>"; };
+		251704ED33B9276E5F701B74 /* IgnoredAppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoredAppsView.swift; sourceTree = "<group>"; };
 		2F1D6E1F6A233AE49D638940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		357E8DF356E2957027C72698 /* ClipRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipRowView.swift; sourceTree = "<group>"; };
 		4CDAAC02F81BE8A4E0D1FA0B /* CopyHistory.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CopyHistory.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6078EB0E8C6C2758D0AE194F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6DBE1A38BB39F7CD8AF53AD2 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		752BF478928663EDC77EBB4B /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotEdgeTrigger.swift; sourceTree = "<group>"; };
 		B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
 		D94C46A7E0CA9A2648BA247B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -40,6 +45,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				50BA05B458E418C4DAB74833 /* KeyboardShortcuts in Frameworks */,
+				FF521212A2CA74674C08D1C4 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +122,8 @@
 				357E8DF356E2957027C72698 /* ClipRowView.swift */,
 				EA0ECD7E03C17885E116DD22 /* ContentView.swift */,
 				EBD34BAE87EF9ADF925C98C1 /* FloatingPanel.swift */,
+				251704ED33B9276E5F701B74 /* IgnoredAppsView.swift */,
+				752BF478928663EDC77EBB4B /* PreferencesView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -138,6 +146,7 @@
 			name = CopyHistory;
 			packageProductDependencies = (
 				A8386092706AD2908996655A /* KeyboardShortcuts */,
+				F338B742479E0B5196DA0334 /* Sparkle */,
 			);
 			productName = CopyHistory;
 			productReference = 4CDAAC02F81BE8A4E0D1FA0B /* CopyHistory.app */;
@@ -165,6 +174,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				D595ED52B8508C872369252D /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				BA25763EEC165C81FBFA1C6B /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 149E36B2C4E5C28AC6724E77 /* Products */;
@@ -200,6 +210,8 @@
 				3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */,
 				BEA3AA26DAAD5352D117B913 /* FloatingPanel.swift in Sources */,
 				3B8C45CC9480E87F3C4A0628 /* HotEdgeTrigger.swift in Sources */,
+				8D8DDB8A9CDBC62B3F1819E7 /* IgnoredAppsView.swift in Sources */,
+				B2F4FA9062216287BD4B570E /* PreferencesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -391,6 +403,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		BA25763EEC165C81FBFA1C6B /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		D595ED52B8508C872369252D /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
@@ -406,6 +426,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D595ED52B8508C872369252D /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		F338B742479E0B5196DA0334 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BA25763EEC165C81FBFA1C6B /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
