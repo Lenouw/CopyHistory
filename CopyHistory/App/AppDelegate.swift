@@ -14,8 +14,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clipMonitor: ClipboardMonitor?
     private var hotEdge: HotEdgeTrigger?
     private var modelContainer: ModelContainer?
+    private var saveContext: ModelContext?  // contexte dédié écriture (réutilisé)
     private var updaterController: SPUStandardUpdaterController?
     private var prefsWindowController: NSWindowController?
+
+    // Plafonds historique
+    private let maxItemsTotal = 1000
+    private let maxImageItems = 50
 
     private var previousApp: NSRunningApplication?
     private let panelWidth:  CGFloat = 420
@@ -42,7 +47,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupModelContainer() {
         let schema = Schema([ClipboardItem.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        modelContainer = try? ModelContainer(for: schema, configurations: config)
+        do {
+            let container = try ModelContainer(for: schema, configurations: config)
+            modelContainer = container
+            saveContext = ModelContext(container)
+            protectStoreOnDisk()
+        } catch {
+            NSLog("[CopyHistory] ModelContainer init échoué : \(error)")
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "Erreur de stockage"
+                alert.informativeText = "CopyHistory n'a pas pu initialiser sa base de données. L'historique ne sera pas sauvegardé.\n\n\(error.localizedDescription)"
+                alert.alertStyle = .warning
+                alert.runModal()
+            }
+        }
+    }
+
+    /// Restreint les permissions du fichier SwiftData au seul utilisateur courant (chmod 600)
+    /// + masque le fichier de Time Machine. Le store reste en clair sur disque, mais inaccessible
+    /// aux autres utilisateurs locaux et exclu des sauvegardes Time Machine.
+    private func protectStoreOnDisk() {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let storeDir = appSupport.appendingPathComponent("CopyHistory", isDirectory: true)
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: storeDir, includingPropertiesForKeys: nil) else { return }
+        for url in files {
+            // chmod 600 : lecture/écriture pour le propriétaire uniquement
+            try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            // Exclure de Time Machine
+            var u = url
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try? u.setResourceValues(values)
+        }
     }
 
     private func setupStatusItem() {
@@ -179,7 +217,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panel.alphaValue = 0
         panel.setFrame(startFrame, display: false)
-        panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
 
         NSAnimationContext.runAnimationGroup({ ctx in
@@ -235,8 +272,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appToRestore = previousApp
         hidePanel()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-            appToRestore?.activate()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.simulatePaste() }
+            // Si l'app source a été quittée entretemps, on copie quand même mais on ne paste pas dans le vide
+            if let app = appToRestore, !app.isTerminated {
+                app.activate()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.simulatePaste() }
+            }
         }
     }
 
@@ -252,7 +292,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func simulatePaste() {
-        guard AXIsProcessTrusted() else { return }
+        guard AXIsProcessTrusted() else {
+            NSLog("[CopyHistory] Direct Paste indisponible : Accessibilité non accordée")
+            return
+        }
         let src = CGEventSource(stateID: .hidSystemState)
         let vKey: CGKeyCode = 0x09
         guard let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true),
@@ -266,8 +309,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Persistence
 
     private func saveClip(_ data: NewClipData) {
-        guard let container = modelContainer else { return }
-        let context = ModelContext(container)
+        guard let context = saveContext else { return }
         if data.type != .image {
             var descriptor = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)])
             descriptor.fetchLimit = 1
@@ -281,12 +323,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func trimHistory(context: ModelContext) {
-        let descriptor = FetchDescriptor<ClipboardItem>(
+        // 1) Cap global sur tous les items non-épinglés
+        let allDescriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { !$0.isPinned },
             sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
         )
-        guard let all = try? context.fetch(descriptor), all.count > 1000 else { return }
-        all.dropFirst(1000).forEach { context.delete($0) }
+        if let all = try? context.fetch(allDescriptor), all.count > maxItemsTotal {
+            all.dropFirst(maxItemsTotal).forEach { context.delete($0) }
+        }
+
+        // 2) Cap spécifique aux images (TIFF/PNG peuvent peser plusieurs MB chacun)
+        let imageRaw = ClipType.image.rawValue
+        let imgDescriptor = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { !$0.isPinned && $0.rawType == imageRaw },
+            sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
+        )
+        if let imgs = try? context.fetch(imgDescriptor), imgs.count > maxImageItems {
+            imgs.dropFirst(maxImageItems).forEach { context.delete($0) }
+        }
+
         try? context.save()
     }
 }

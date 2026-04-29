@@ -48,7 +48,9 @@ final class HotEdgeTrigger {
     // MARK: - CGEventTap (primary)
 
     private func startCGEventTap() {
-        let selfPtr = Unmanaged.passRetained(self).toOpaque()
+        // passUnretained : l'AppDelegate garde déjà une référence forte sur HotEdgeTrigger,
+        // donc inutile (et incorrect) de retain — sinon fuite permanente.
+        let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue)
 
         eventTap = CGEvent.tapCreate(
@@ -64,9 +66,13 @@ final class HotEdgeTrigger {
             runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
             CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
+            #if DEBUG
             print("[HotEdge] CGEventTap démarré ✓")
+            #endif
         } else {
+            #if DEBUG
             print("[HotEdge] CGEventTap échoué → fallback NSEvent")
+            #endif
             startNSEventMonitor()
         }
     }
@@ -81,7 +87,9 @@ final class HotEdgeTrigger {
             let isMomentum = !event.momentumPhase.isEmpty
             self.process(nsY: loc.y, deltaY: delta, isMomentum: isMomentum)
         }
+        #if DEBUG
         print("[HotEdge] NSEvent global monitor démarré ✓")
+        #endif
     }
 
     // MARK: - CGEvent handler (appelé depuis le callback C)
@@ -101,7 +109,9 @@ final class HotEdgeTrigger {
         let momentumPhase = event.getIntegerValueField(.scrollWheelEventMomentumPhase)
         let isMomentum = momentumPhase != 0
 
+        #if DEBUG
         print("[HotEdge] nsY=\(Int(nsY)) Δ=\(Int(rawDelta)) momentum=\(isMomentum) phase=\(phase) acc=\(Int(accumulator))")
+        #endif
 
         process(nsY: nsY, deltaY: CGFloat(rawDelta), isMomentum: isMomentum)
     }
@@ -134,7 +144,9 @@ final class HotEdgeTrigger {
         guard Date().timeIntervalSince(lastTriggerTime) > cooldown else { return }
 
         if accumulator >= triggerThreshold {
+            #if DEBUG
             print("[HotEdge] 🚀 DÉCLENCHÉ acc=\(Int(accumulator))")
+            #endif
             accumulator = 0
             lastTriggerTime = Date()
             let mouseX = NSEvent.mouseLocation.x

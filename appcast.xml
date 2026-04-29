@@ -6,6 +6,31 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.0.1</title>
+            <pubDate>Wed, 29 Apr 2026 11:55:00 +0200</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.0.1 — Audit sécurité</h3>
+                <ul>
+                    <li>🔒 Permissions du store local restreintes (chmod 600) + exclu de Time Machine</li>
+                    <li>🔒 Filtre mots de passe étendu : Bitwarden, Dashlane, KeePassXC, Proton Pass, Enpass, NordPass</li>
+                    <li>🐛 Fuite mémoire CGEventTap corrigée</li>
+                    <li>⚡ Performance : ModelContext partagé pour les écritures</li>
+                    <li>🖼️ Cap distinct sur les images (50) — évite la base qui gonfle</li>
+                    <li>🛡️ Alerte si l'initialisation du stockage échoue</li>
+                    <li>🧹 Logs verbeux retirés des builds Release</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.0.1/CopyHistory-1.0.1.zip"
+                sparkle:edSignature="4pyLzMSTmviwF7vlV69YO5sKXnexLGqHeVKWeZBdKEpR02fr+DCiqIRfY50yOmUuFfzjehkxcsB8qJuER7Z5DA=="
+                length="1662939"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.0.0</title>
             <pubDate>Tue, 29 Apr 2026 11:00:00 +0200</pubDate>
             <sparkle:version>1</sparkle:version>
