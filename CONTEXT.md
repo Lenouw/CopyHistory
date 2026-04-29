@@ -1,26 +1,124 @@
 # Contexte du projet
 
 ## Projet
-**App CopyHistory** — Application macOS de gestion de l'historique du presse-papier (clipboard history), permettant d'accéder rapidement aux éléments copiés précédemment.
+**App CopyHistory** — Clone de CopyLess 2 (https://copyless.net/) pour usage personnel sur plusieurs Mac. Gestionnaire d'historique presse-papier macOS : capture automatique de tout ce qui est copié, accès rapide, favoris, recherche, raccourcis globaux.
 
 ## Stack technique
-À définir — projet en cours d'initialisation.
+- **Langage :** Swift 6
+- **UI :** SwiftUI + AppKit (NSPanel pour la fenêtre flottante)
+- **Persistance :** SwiftData (macOS 14+)
+- **Hotkeys globaux :** librairie `KeyboardShortcuts` (Sindre Sorhus, MIT)
+- **Préférences user :** librairie `Defaults` (Sindre Sorhus, MIT)
+- **Distribution :** Direct download (.dmg) ou Homebrew Cask — hors sandbox App Store (nécessaire pour CGEventTap / coller simulé)
+- **Target macOS :** 14+ (Sonoma)
 
 ## Dernière mise à jour
-2026-04-29 10:02
+2026-04-29 10:30
 
 ## Ce qu'on a fait
-- 2026-04-29 : Initialisation du dépôt Git et création du fichier CONTEXT.md. Le projet vient d'être démarré.
+- 2026-04-29 : Initialisation du dépôt Git et création du CONTEXT.md.
+- 2026-04-29 : Recherche complète sur CopyLess 2 (fonctionnalités, UX) et sur l'implémentation technique macOS (NSPasteboard, NSPanel, CGEventTap, open source existant).
 
 ## Où on en est
-Projet tout juste initialisé. Répertoire vide, aucun code encore écrit. La prochaine étape est de définir la stack technique et de commencer le développement.
+Phase de recherche terminée. Aucun code encore écrit. On a maintenant une vision claire de ce qu'on veut construire et comment l'implémenter. La référence open source principale est **Maccy** (19.6k stars, MIT, Swift + SwiftUI + AppKit, actif en 2025) — on va s'en inspirer fortement sans forker.
 
 ## Architecture et décisions
-Aucune décision technique prise pour l'instant. À remplir au fur et à mesure.
 
-## Ce qu'il reste à faire
-- [ ] Définir la stack technique (Electron, Swift natif, Tauri, etc.)
-- [ ] Créer la structure du projet
-- [ ] Implémenter la capture du presse-papier en arrière-plan
-- [ ] Implémenter l'interface de recherche / historique
-- [ ] Gérer la persistance des entrées copiées
+### Décision 1 — Swift natif, pas Electron/Tauri
+Electron = 150-300 MB RAM au repos + bundle 120-180 MB → inacceptable pour une app utilitaire menu bar. Swift = ~5-8 MB de bundle, ~15-30 MB RAM. Tauri serait acceptable mais implique Rust pour les APIs macOS critiques. Swift est la seule option viable pour une app légère et native.
+
+### Décision 2 — Hors sandbox App Store
+Le mode sandbox empêche `CGEventTap` (hotkey global) et la simulation de `⌘V` (Direct Paste). L'app sera distribuée en dehors du Mac App Store, en direct download. Usage personnel uniquement de toute façon.
+
+### Décision 3 — Surveillance du presse-papier par polling
+macOS n'offre pas de notification push pour les changements de `NSPasteboard`. On poll `NSPasteboard.general.changeCount` toutes les **0.5 secondes** — c'est la technique universelle utilisée par Maccy, CopyLess, etc. CPU < 1%.
+
+### Décision 4 — SwiftData pour la persistance
+SwiftData (macOS 14+) est l'API moderne recommandée. Les images volumineuses sont stockées en fichiers séparés dans `Application Support`, seul le chemin est en base (évite les BLOBs massifs).
+
+### Référence technique principale
+**Maccy** — https://github.com/p0deje/Maccy (MIT, 19.6k stars, actif 2025). Lire en priorité : `Clipboard.swift`, `AppDelegate.swift`, `History.swift`.
+
+---
+
+## Fonctionnalités à implémenter (par priorité)
+
+### MVP — Core
+- [ ] Surveillance presse-papier en arrière-plan (polling NSPasteboard.changeCount, 0.5s)
+- [ ] Capture texte, images, fichiers, URLs
+- [ ] Historique persistant (SwiftData) — 1000 entrées max
+- [ ] App menu bar (NSStatusItem ou MenuBarExtra SwiftUI)
+- [ ] Fenêtre flottante (NSPanel niveau .floating, au-dessus de tout)
+- [ ] Liste des clips avec : app source (icône), aperçu contenu, temps écoulé, type, nb caractères
+- [ ] Recherche live dans l'historique
+- [ ] Double-clic = Direct Paste (colle dans la dernière app active via simulation ⌘V)
+- [ ] Raccourci global pour ouvrir/fermer la fenêtre (configurable)
+- [ ] Filtre liste noire d'apps (ignorer certaines apps sensibles)
+- [ ] Ignorer les données masquées (champs mot de passe, `concealed` type)
+- [ ] Persistance au redémarrage (historique survit au reboot)
+
+### V2 — Favoris & Polish
+- [ ] Système de favoris (jamais supprimés automatiquement)
+- [ ] Labels/renommage personnalisés sur les clips
+- [ ] Plain Text mode (strip formatting) — raccourci `Ctrl+Option+T`
+- [ ] Raccourcis directs pour les 10 clips récents et 10 favoris (sans ouvrir la fenêtre)
+- [ ] Quick Look (voir le clip complet)
+- [ ] Drag & drop depuis la fenêtre CopyHistory vers n'importe quelle app
+- [ ] 9 thèmes + personnalisation apparence (couleurs, police, transparence)
+- [ ] Fenêtre "ghost" semi-transparente (opaque au survol)
+
+### V3 — Fonctionnalités avancées
+- [ ] Serial Paste : buffer de clips à coller séquentiellement (`⌥⌘Y` démarrer, `⌥⌘X` coller suivant)
+- [ ] iCloud sync des favoris
+- [ ] Export de l'historique
+- [ ] Sons par action (configurables)
+- [ ] Support VoiceOver / accessibilité complète
+
+---
+
+## Notes techniques importantes
+
+### Surveillance NSPasteboard
+```swift
+let pasteboard = NSPasteboard.general
+var lastChangeCount = pasteboard.changeCount
+Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+    guard pasteboard.changeCount != lastChangeCount else { return }
+    lastChangeCount = pasteboard.changeCount
+    // Nouveau contenu
+}
+```
+Types à ignorer : `.concealed`, `.transient`, `.autoGenerated`, préfixes `dyn.`
+
+### Fenêtre flottante NSPanel
+```swift
+class FloatingPanel: NSPanel {
+    init() {
+        super.init(contentRect: .zero,
+            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            backing: .buffered, defer: false)
+        self.level = .floating
+        self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+    }
+}
+```
+
+### macOS 15.4+ alert presse-papier
+Apple a ajouté une alerte privacy quand une app lit le presse-papier par programme (sans geste UI). Impact à gérer — surveiller les retours utilisateurs une fois sur macOS 15.4+.
+
+### Permissions requises
+- **Accessibility** (System Settings > Privacy) : nécessaire pour NSEvent global monitor
+- **Input Monitoring** (si CGEventTap) : nécessaire pour intercepter les touches globalement
+
+---
+
+## Problèmes connus
+Aucun pour l'instant (pas encore de code).
+
+## Notes pour la prochaine session
+- Commencer par lire Maccy source code avant d'écrire une ligne : https://github.com/p0deje/Maccy
+- Créer le projet Xcode : app SwiftUI, target macOS 14+, hors sandbox
+- Ajouter les dépendances via Swift Package Manager : `KeyboardShortcuts` et `Defaults` (Sindre Sorhus)
+- Premier fichier à écrire : `ClipboardMonitor.swift` (polling NSPasteboard)
+- Deuxième : `ClipboardItem.swift` (modèle SwiftData)
+- Troisième : le StatusItem / MenuBarExtra pour l'icône menu bar
