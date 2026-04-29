@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotEdge: HotEdgeTrigger?
     private var modelContainer: ModelContainer?
     private var updaterController: SPUStandardUpdaterController?
+    private var prefsWindowController: NSWindowController?
 
     private var previousApp: NSRunningApplication?
     private let panelWidth:  CGFloat = 420
@@ -125,8 +126,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openPreferences() {
+        if prefsWindowController == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 420),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "Préférences CopyHistory"
+            window.center()
+            window.isReleasedWhenClosed = false
+            window.contentView = NSHostingView(rootView: PreferencesView())
+            prefsWindowController = NSWindowController(window: window)
+        }
+        prefsWindowController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     @objc func checkForUpdates(_ sender: Any?) {

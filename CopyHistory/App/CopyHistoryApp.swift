@@ -5,8 +5,8 @@ struct CopyHistoryApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        Settings {
-            PreferencesView()
-        }
+        // Scene vide requise par SwiftUI — les préférences sont gérées
+        // par PreferencesWindowController dans AppDelegate
+        Settings { EmptyView() }
     }
 }
