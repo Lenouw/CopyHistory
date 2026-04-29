@@ -117,12 +117,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(updateItem)
 
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quitter CopyHistory", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
-        menu.delegate = self
-        statusItem?.menu = menu
-        statusItem?.button?.performClick(nil)
-        // menu = nil est réinitialisé dans menuDidClose (NSMenuDelegate)
+        let quitItem = NSMenuItem(title: "Quitter CopyHistory", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        quitItem.target = NSApp
+        menu.addItem(quitItem)
+
+        // popUp est la seule méthode fiable — pas de statusItem.menu = menu
+        // qui bloque tous les clics suivants si menuDidClose ne se déclenche pas
+        if let button = statusItem?.button {
+            menu.popUp(positioning: nil,
+                       at: NSPoint(x: 0, y: button.bounds.height + 4),
+                       in: button)
+        }
     }
 
     @objc func openPreferences() {
@@ -285,10 +291,3 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// MARK: - NSMenuDelegate : reset menu après fermeture
-
-extension AppDelegate: NSMenuDelegate {
-    func menuDidClose(_ menu: NSMenu) {
-        statusItem?.menu = nil
-    }
-}
