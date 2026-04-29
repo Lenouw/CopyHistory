@@ -5,7 +5,8 @@ import CoreGraphics
 // et que l'utilisateur fait défiler vers le haut avec deux doigts.
 // Utilise CGEventTap (si Accessibility accordée) ou NSEvent global monitor en fallback.
 final class HotEdgeTrigger {
-    var onScrollUp: (() -> Void)?
+    // Callback avec la position X de la souris au moment du déclenchement
+    var onScrollUp: ((_ mouseX: CGFloat) -> Void)?
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -136,8 +137,9 @@ final class HotEdgeTrigger {
             print("[HotEdge] 🚀 DÉCLENCHÉ acc=\(Int(accumulator))")
             accumulator = 0
             lastTriggerTime = Date()
+            let mouseX = NSEvent.mouseLocation.x
             DispatchQueue.main.async { [weak self] in
-                self?.onScrollUp?()
+                self?.onScrollUp?(mouseX)
             }
         }
     }

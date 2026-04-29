@@ -17,10 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // App active AVANT l'ouverture du panel — pour Direct Paste
     private var previousApp: NSRunningApplication?
 
-    // Dimensions et position du panel (bas-gauche, au-dessus du Dock)
     private let panelWidth:  CGFloat = 420
     private let panelHeight: CGFloat = 560
-    private let panelMarginLeft: CGFloat = 0   // collé au bord gauche
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -58,13 +56,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupHotEdgeTrigger() {
         hotEdge = HotEdgeTrigger()
-        hotEdge?.onScrollUp = { [weak self] in
+        hotEdge?.onScrollUp = { [weak self] mouseX in
             guard let self else { return }
             if self.panel?.isVisible == true {
                 self.hidePanel()
             } else {
                 self.previousApp = NSWorkspace.shared.frontmostApplication
-                self.showPanel()
+                self.showPanel(centeredAt: mouseX)
             }
         }
         hotEdge?.start()
@@ -89,17 +87,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hidePanel()
         } else {
             previousApp = NSWorkspace.shared.frontmostApplication
-            showPanel()
+            let mouseX = NSEvent.mouseLocation.x
+            showPanel(centeredAt: mouseX)
         }
     }
 
-    private func showPanel() {
+    private func showPanel(centeredAt mouseX: CGFloat = -1) {
         buildPanelIfNeeded()
         guard let panel else { return }
 
-        let finalFrame = panelFrame()
+        let finalFrame = panelFrame(centeredAt: mouseX)
 
-        // Départ : panel caché sous le bord bas de l'écran
+        // Départ : panel caché sous le bord bas de l'écran, transparent
         let startFrame = NSRect(
             x: finalFrame.minX,
             y: finalFrame.minY - finalFrame.height,
@@ -107,41 +106,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             height: finalFrame.height
         )
 
+        panel.alphaValue = 0
         panel.setFrame(startFrame, display: false)
         panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
 
-        // Slide-up animation
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.28
+        // Animation spring : slide-up rapide + léger overshoot + settle
+        let overshootFrame = NSRect(
+            x: finalFrame.minX,
+            y: finalFrame.minY + 10,
+            width: finalFrame.width,
+            height: finalFrame.height
+        )
+
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.32
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            panel.animator().setFrame(finalFrame, display: true)
-        }
+            panel.animator().alphaValue = 1
+            panel.animator().setFrame(overshootFrame, display: true)
+        }, completionHandler: {
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.14
+                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 0.6, 1)
+                panel.animator().setFrame(finalFrame, display: true)
+            }
+        })
     }
 
     private func hidePanel() {
         guard let panel else { return }
-        let hiddenY = panel.frame.minY - panel.frame.height
+        let hiddenOrigin = NSPoint(x: panel.frame.minX, y: panel.frame.minY - panel.frame.height)
 
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.22
+            ctx.duration = 0.2
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
-            panel.animator().setFrameOrigin(NSPoint(x: panel.frame.minX, y: hiddenY))
+            panel.animator().alphaValue = 0
+            panel.animator().setFrameOrigin(hiddenOrigin)
         }, completionHandler: {
             panel.orderOut(nil)
+            panel.alphaValue = 1  // reset pour le prochain affichage
         })
     }
 
-    // Calcule la frame finale du panel : bas-gauche, juste au-dessus du Dock
-    private func panelFrame() -> NSRect {
+    // Calcule la frame finale du panel, centré horizontalement sur mouseX
+    private func panelFrame(centeredAt mouseX: CGFloat = -1) -> NSRect {
         let screen = NSScreen.main ?? NSScreen.screens[0]
-        let visible = screen.visibleFrame   // exclut menu bar + Dock
-        return NSRect(
-            x: visible.minX + panelMarginLeft,
-            y: visible.minY,
-            width: panelWidth,
-            height: panelHeight
-        )
+        let visible = screen.visibleFrame  // exclut menu bar + Dock
+
+        // Centrer sur la position X de la souris (ou centrer sur l'écran si non spécifié)
+        let referenceX = mouseX >= 0 ? mouseX : visible.midX
+        var x = referenceX - panelWidth / 2
+
+        // Clamp pour ne pas sortir de l'écran
+        x = max(visible.minX, min(x, visible.maxX - panelWidth))
+
+        return NSRect(x: x, y: visible.minY, width: panelWidth, height: panelHeight)
     }
 
     private func buildPanelIfNeeded() {
