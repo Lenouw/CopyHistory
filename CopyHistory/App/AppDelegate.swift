@@ -29,6 +29,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let panelWidth:  CGFloat = 420
     private let panelHeight: CGFloat = 560
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // Sauvegarde explicite avant que Sparkle (ou l'OS) tue le processus —
+        // évite de perdre les derniers items en cas de terminaison abrupte.
+        try? modelContainer?.mainContext.save()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         registerDefaults()
@@ -48,9 +54,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.register(defaults: ["ignorePasswords": true])
     }
 
+    private static func storeURL() -> URL? {
+        guard let appSupport = FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask).first
+        else { return nil }
+        let dir = appSupport.appendingPathComponent("CopyHistory", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("history.store")
+    }
+
     private func setupModelContainer() {
         let schema = Schema([ClipboardItem.self])
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        // URL explicite → même chemin garanti entre toutes les versions de l'app.
+        // Sans ça, SwiftData peut changer l'emplacement selon le bundle identifier,
+        // ce qui fait apparaître une base vide à chaque mise à jour.
+        guard let url = Self.storeURL() else {
+            NSLog("[CopyHistory] Impossible de déterminer le chemin du store")
+            return
+        }
+        let config = ModelConfiguration(schema: schema, url: url)
         do {
             let container = try ModelContainer(for: schema, configurations: config)
             modelContainer = container
@@ -60,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 let alert = NSAlert()
                 alert.messageText = "Erreur de stockage"
-                alert.informativeText = "CopyHistory n'a pas pu initialiser sa base de données. L'historique ne sera pas sauvegardé.\n\n\(error.localizedDescription)"
+                alert.informativeText = "CopyHistory n'a pas pu initialiser sa base de données.\n\n\(error.localizedDescription)"
                 alert.alertStyle = .warning
                 alert.runModal()
             }
