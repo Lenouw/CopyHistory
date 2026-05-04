@@ -8,15 +8,17 @@ extension KeyboardShortcuts.Name {
     static let togglePanel = Self("togglePanel", default: .init(.v, modifiers: [.shift, .command]))
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var panel: FloatingPanel?
     private var clipMonitor: ClipboardMonitor?
     private var hotEdge: HotEdgeTrigger?
     private var modelContainer: ModelContainer?
-    private var saveContext: ModelContext?  // contexte dédié écriture (réutilisé)
     private var updaterController: SPUStandardUpdaterController?
     private var prefsWindowController: NSWindowController?
+
+    private var insertCount: Int = 0
 
     // Plafonds historique
     private let maxItemsTotal = 1000
@@ -51,7 +53,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             let container = try ModelContainer(for: schema, configurations: config)
             modelContainer = container
-            saveContext = ModelContext(container)
             protectStoreOnDisk()
         } catch {
             NSLog("[CopyHistory] ModelContainer init échoué : \(error)")
@@ -312,28 +313,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Chiffre en place tous les enregistrements créés avant la 1.1.0 (qui sont en clair).
     /// Idempotent : ne touche pas aux items déjà chiffrés.
     private func migrateLegacyClipsToEncrypted() {
-        guard let context = saveContext else { return }
-        let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { !$0.isEncrypted })
-        guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return }
-
-        var migrated = 0
-        for item in legacy {
-            if let text = item.textContent, !text.isEmpty {
-                if let enc = CryptoStore.encryptString(text) {
+        guard let container = modelContainer else { return }
+        Task { @MainActor in
+            let context = container.mainContext
+            let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { !$0.isEncrypted })
+            guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return }
+            var migrated = 0
+            for item in legacy {
+                if let text = item.textContent, !text.isEmpty {
+                    guard let enc = CryptoStore.encryptString(text) else { continue }
                     item.textContent = enc
-                } else { continue }
-            }
-            if let img = item.imageData, !img.isEmpty {
-                if let enc = CryptoStore.encrypt(img) {
+                }
+                if let img = item.imageData, !img.isEmpty {
+                    guard let enc = CryptoStore.encrypt(img) else { continue }
                     item.imageData = enc
-                } else { continue }
+                }
+                item.isEncrypted = true
+                migrated += 1
+                // Yield to run loop every 50 items to avoid blocking
+                if migrated % 50 == 0 { try? context.save() }
             }
-            item.isEncrypted = true
-            migrated += 1
-        }
-        try? context.save()
-        if migrated > 0 {
-            NSLog("[CopyHistory] Migration : \(migrated) éléments chiffrés rétroactivement")
+            try? context.save()
+            if migrated > 0 { NSLog("[CopyHistory] Migration : \(migrated) éléments chiffrés") }
         }
     }
 
@@ -342,18 +343,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Supprime tous les éléments de l'historique (épinglés inclus).
     /// La clé Keychain est conservée pour ne pas casser les nouveaux items.
     @objc func eraseAllHistory() {
-        guard let context = saveContext else { return }
+        guard let context = modelContainer?.mainContext else { return }
         let descriptor = FetchDescriptor<ClipboardItem>()
         if let all = try? context.fetch(descriptor) {
             all.forEach { context.delete($0) }
             try? context.save()
         }
+        insertCount = 0
     }
 
     // MARK: - Persistence
 
     private func saveClip(_ data: NewClipData) {
-        guard let context = saveContext else { return }
+        guard let context = modelContainer?.mainContext else { return }
         if data.type != .image {
             var descriptor = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)])
             descriptor.fetchLimit = 1
@@ -363,7 +365,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                   filePath: data.filePath, appBundleID: data.appBundleID, appName: data.appName)
         context.insert(item)
         try? context.save()
-        trimHistory(context: context)
+        insertCount += 1
+        if insertCount % 20 == 0 { trimHistory(context: context) }
     }
 
     private func trimHistory(context: ModelContext) {

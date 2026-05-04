@@ -6,6 +6,27 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.2</title>
+            <pubDate>Sun, 04 May 2026 09:30:00 +0200</pubDate>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.2 — Correctif critique</h3>
+                <ul>
+                    <li>🐛 <b>Deadlock SwiftData résolu</b> — l'app consommait 99% CPU en permanence, bloquant le presse-papiers et l'icône de la barre d'état</li>
+                    <li>Migration vers le chiffrement déplacée en tâche asynchrone (ne bloque plus le démarrage)</li>
+                    <li>Optimisation : nettoyage de l'historique tous les 20 inserts au lieu de chaque copie</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.2/CopyHistory-1.1.2.zip"
+                sparkle:edSignature="r6GSDsgmq3uc2QLB1T6VNpgxlxnr4h3kiO0mygzZWt77LSnWwlmQTSgB+Xm5dE0b6wdxAayC+oXdYcP4L+6gCg=="
+                length="1716944"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.1</title>
             <pubDate>Wed, 29 Apr 2026 16:00:00 +0200</pubDate>
             <sparkle:version>4</sparkle:version>
