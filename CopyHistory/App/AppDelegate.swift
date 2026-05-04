@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prefsWindowController: NSWindowController?
 
     private var insertCount: Int = 0
+    private var outsideClickMonitor: Any?
 
     // Plafonds historique
     private let maxItemsTotal = 1000
@@ -220,6 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.alphaValue = 0
         panel.setFrame(startFrame, display: false)
         panel.orderFrontRegardless()
+        startOutsideClickMonitor()
 
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.32
@@ -235,8 +237,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         })
     }
 
+    private func startOutsideClickMonitor() {
+        guard outsideClickMonitor == nil else { return }
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self, let panel = self.panel, panel.isVisible else { return }
+            let clickLocation = NSEvent.mouseLocation
+            if !panel.frame.contains(clickLocation) {
+                self.hidePanel()
+            }
+        }
+    }
+
+    private func stopOutsideClickMonitor() {
+        if let monitor = outsideClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            outsideClickMonitor = nil
+        }
+    }
+
     private func hidePanel() {
         guard let panel else { return }
+        stopOutsideClickMonitor()
         let hiddenOrigin = NSPoint(x: panel.frame.minX, y: panel.frame.minY - panel.frame.height)
 
         NSAnimationContext.runAnimationGroup({ ctx in
