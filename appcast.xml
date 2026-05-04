@@ -6,6 +6,25 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.3</title>
+            <pubDate>Sun, 04 May 2026 11:00:00 +0200</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.1.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.3</h3>
+                <ul>
+                    <li>🎨 Nouveau logo — presse-papiers + horloge historique</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.3/CopyHistory-1.1.3.zip"
+                sparkle:edSignature="rZOmippdWkE3jCC9nt798K1LcmU0SJcrZm2Z4ybeGa7OlJIayjE23+iMazVxOtNQWGCjJHdAkX4a3cng854PAQ=="
+                length="2830187"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.2</title>
             <pubDate>Sun, 04 May 2026 09:30:00 +0200</pubDate>
             <sparkle:version>5</sparkle:version>
