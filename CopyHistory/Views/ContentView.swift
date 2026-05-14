@@ -97,12 +97,12 @@ struct ContentView: View {
             Divider().frame(height: 12)
 
             Button("Tout effacer") { clearAll() }
-                .font(.system(size: 10))
+                .font(.system(size: 11))
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Context menu
@@ -157,23 +157,23 @@ private struct PasteQueueToggle: View {
             qm.toggle()
             if !wasActive { onActivate?() }
         }) {
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: qm.isActive ? "tray.full.fill" : "tray.full")
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .foregroundColor(qm.isActive ? .accentColor : .secondary)
 
                 if qm.isActive {
                     Text("\(remaining) restant\(remaining > 1 ? "s" : "")")
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                         .foregroundColor(.accentColor)
                 } else {
                     Text("File de collage")
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 5)
                     .fill(qm.isActive ? Color.accentColor.opacity(0.12) : Color.clear)
