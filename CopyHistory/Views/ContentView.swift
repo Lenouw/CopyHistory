@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var selectedID: UUID?
 
     var onPaste: ((ClipboardItem) -> Void)?
+    var onToggleQueue: (() -> Void)?
 
     private var filteredItems: [ClipboardItem] {
         let pool = searchText.isEmpty ? Array(items.prefix(300)) : items
@@ -84,11 +85,17 @@ struct ContentView: View {
     }
 
     private var footer: some View {
-        HStack {
+        HStack(spacing: 8) {
             Text("\(items.count) élément\(items.count > 1 ? "s" : "")")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
+
             Spacer()
+
+            PasteQueueToggle(onActivate: onToggleQueue)
+
+            Divider().frame(height: 12)
+
             Button("Tout effacer") { clearAll() }
                 .font(.system(size: 10))
                 .buttonStyle(.plain)
@@ -133,5 +140,49 @@ struct ContentView: View {
         for item in items where !item.isPinned {
             modelContext.delete(item)
         }
+    }
+}
+
+// MARK: - Paste Queue Toggle
+
+private struct PasteQueueToggle: View {
+    @ObservedObject private var qm = PasteQueueManager.shared
+    var onActivate: (() -> Void)?
+
+    private var remaining: Int { max(0, qm.queue.count - qm.nextIndex) }
+
+    var body: some View {
+        Button(action: {
+            let wasActive = qm.isActive
+            qm.toggle()
+            if !wasActive { onActivate?() }
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: qm.isActive ? "tray.full.fill" : "tray.full")
+                    .font(.system(size: 11))
+                    .foregroundColor(qm.isActive ? .accentColor : .secondary)
+
+                if qm.isActive {
+                    Text("\(remaining) restant\(remaining > 1 ? "s" : "")")
+                        .font(.system(size: 10))
+                        .foregroundColor(.accentColor)
+                } else {
+                    Text("File de collage")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(qm.isActive ? Color.accentColor.opacity(0.12) : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: qm.isActive)
+        .help(qm.isActive
+              ? "File de collage active — \(qm.queue.count) éléments. Cliquer pour annuler."
+              : "Activer la file de collage : copiez plusieurs textes, puis collez-les un par un avec ⌘V")
     }
 }

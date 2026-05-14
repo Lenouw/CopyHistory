@@ -306,8 +306,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildPanelIfNeeded() {
         guard panel == nil, let container = modelContainer else { return }
         panel = FloatingPanel()
-        let view = ContentView(onPaste: { [weak self] item in self?.directPaste(item) })
-            .modelContainer(container)
+        var contentView = ContentView(onPaste: { [weak self] item in self?.directPaste(item) })
+        contentView.onToggleQueue = { [weak self] in self?.hidePanel() }
+        let view = contentView.modelContainer(container)
         panel?.contentViewController = NSHostingController(rootView: view)
     }
 
@@ -408,6 +409,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = ClipboardItem(type: data.type, text: data.text, imageData: data.imageData,
                                   filePath: data.filePath, appBundleID: data.appBundleID, appName: data.appName)
         context.insert(item)
+
+        // If paste-queue mode is active, also add text to the queue (images skipped)
+        if PasteQueueManager.shared.isActive, data.type != .image,
+           let text = data.text, !text.isEmpty {
+            PasteQueueManager.shared.enqueue(text)
+        }
+
         try? context.save()
         insertCount += 1
         if insertCount % 20 == 0 { trimHistory(context: context) }

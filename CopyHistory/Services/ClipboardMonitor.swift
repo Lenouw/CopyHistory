@@ -46,6 +46,10 @@ private let passwordIndicatorTypes: Set<String> = [
 final class ClipboardMonitor {
     var onNewItem: ((NewClipData) -> Void)?
 
+    /// Set to true before a programmatic pasteboard change to skip recording it.
+    /// Automatically reset to false on the next polling cycle.
+    static var suppressNext: Bool = false
+
     private var timer: Timer?
     private var lastChangeCount: Int
 
@@ -69,6 +73,12 @@ final class ClipboardMonitor {
         let pasteboard = NSPasteboard.general
         guard pasteboard.changeCount != lastChangeCount else { return }
         lastChangeCount = pasteboard.changeCount
+
+        // Skip if this change was triggered programmatically by PasteQueueManager
+        if ClipboardMonitor.suppressNext {
+            ClipboardMonitor.suppressNext = false
+            return
+        }
 
         let sourceApp = NSWorkspace.shared.frontmostApplication
         let bundleID = sourceApp?.bundleIdentifier ?? ""

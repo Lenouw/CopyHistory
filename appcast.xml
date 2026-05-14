@@ -6,6 +6,26 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.6</title>
+            <pubDate>Thu, 14 May 2026 17:05:00 +0200</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.1.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.6 — File de collage</h3>
+                <ul>
+                    <li>📋 <b>Nouveau : File de collage</b> — activez le bouton dans le panneau, copiez plusieurs textes à la suite, puis collez-les un par un avec ⌘V dans n'importe quelle app</li>
+                    <li>Le mode se désactive automatiquement après le dernier collage</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.6/CopyHistory-1.1.6.zip"
+                sparkle:edSignature="r5a/JmAEPuv7w67njpf29QUoyCuXYbd87AFIlhdjjn2fuvofeq1Hni1RmxnUHXpLZFHys20Dw6i/yfkwhvx9DQ=="
+                length="2864206"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.5</title>
             <pubDate>Sun, 04 May 2026 14:00:00 +0200</pubDate>
             <sparkle:version>8</sparkle:version>
