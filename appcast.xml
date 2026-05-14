@@ -6,6 +6,28 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.8</title>
+            <pubDate>Thu, 14 May 2026 17:45:00 +0200</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>1.1.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.8 — Verrouillage biométrique</h3>
+                <ul>
+                    <li>🔐 <b>Touch ID</b> pour ouvrir l'historique après inactivité (par défaut 15 min)</li>
+                    <li>Paramétrable dans Préférences › Sécurité (1/5/15/30/60 min ou "Toujours")</li>
+                    <li>Fallback automatique sur mot de passe macOS si Touch ID indisponible</li>
+                    <li>Auth redemandée à chaque relance de l'app</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.8/CopyHistory-1.1.8.zip"
+                sparkle:edSignature="oy/vCAmlgvDdEutCLiSVt1rYH8/EMTGLwNn+n91Fyg1qRnDljdpCgHCKWcDk+ojYaffOulry7U/Crh0/FXHgCg=="
+                length="2888923"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.7</title>
             <pubDate>Thu, 14 May 2026 17:25:00 +0200</pubDate>
             <sparkle:version>10</sparkle:version>

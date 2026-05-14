@@ -26,6 +26,8 @@
     <string>Copyright © 2026 Florian Bonin. All rights reserved.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>CopyHistory utilise Face ID / Touch ID pour protéger l'accès à votre historique du presse-papiers.</string>
     <!-- Sparkle auto-update -->
     <key>SUFeedURL</key>
     <string>https://raw.githubusercontent.com/Lenouw/CopyHistory/main/appcast.xml</string>

@@ -13,12 +13,85 @@ struct PreferencesView: View {
                 .tabItem { Label("Apps ignorées", systemImage: "nosign") }
                 .tag(1)
 
+            SecurityPrefsTab()
+                .tabItem { Label("Sécurité", systemImage: "touchid") }
+                .tag(2)
+
             PrivacyPrefsTab()
                 .tabItem { Label("Confidentialité", systemImage: "lock.shield") }
-                .tag(2)
+                .tag(3)
         }
-        .frame(width: 520, height: 420)
+        .frame(width: 520, height: 460)
         .padding(20)
+    }
+}
+
+// MARK: - Sécurité (biométrie)
+
+struct SecurityPrefsTab: View {
+    @AppStorage("biometricEnabled") private var enabled: Bool = true
+    @AppStorage("biometricTimeoutMinutes") private var timeout: Int = 15
+
+    private let timeoutOptions: [(Int, String)] = [
+        (0, "Toujours demander"),
+        (1, "1 minute"),
+        (5, "5 minutes"),
+        (15, "15 minutes"),
+        (30, "30 minutes"),
+        (60, "1 heure")
+    ]
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "touchid")
+                        .foregroundColor(.accentColor)
+                        .font(.system(size: 24))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Verrouillage biométrique")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("Demande Touch ID (ou le mot de passe de votre Mac) pour ouvrir l'historique après une période d'inactivité. Protège vos clés API, mots de passe et données sensibles si un tiers a un accès physique à votre Mac.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
+                Toggle("Activer le verrouillage biométrique", isOn: $enabled)
+                    .onChange(of: enabled) { _, _ in
+                        BiometricGate.shared.resetGracePeriod()
+                    }
+
+                if enabled {
+                    Picker("Redemander après", selection: $timeout) {
+                        ForEach(timeoutOptions, id: \.0) { value, label in
+                            Text(label).tag(value)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: timeout) { _, _ in
+                        BiometricGate.shared.resetGracePeriod()
+                    }
+                }
+            }
+
+            if enabled {
+                Section {
+                    HStack(spacing: 10) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                        Text("L'authentification est aussi redemandée à chaque relance de l'application.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

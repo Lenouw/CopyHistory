@@ -14,6 +14,7 @@
 		3C646A0B6B7A619325D06D5B /* CopyHistoryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0130B26A1D484B3307C03ABF /* CopyHistoryApp.swift */; };
 		4916E57803FEFDF298BA9F10 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */; };
 		50BA05B458E418C4DAB74833 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = A8386092706AD2908996655A /* KeyboardShortcuts */; };
+		88B5CFED1F80961FB744A13D /* BiometricGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3357E0290F96DEAC504D0D7F /* BiometricGate.swift */; };
 		8D8DDB8A9CDBC62B3F1819E7 /* IgnoredAppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251704ED33B9276E5F701B74 /* IgnoredAppsView.swift */; };
 		B0E6CA1A3E4FDA8B69275601 /* PasteQueueManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C92C1C67E0EDF13E7B2148 /* PasteQueueManager.swift */; };
 		B2F4FA9062216287BD4B570E /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752BF478928663EDC77EBB4B /* PreferencesView.swift */; };
@@ -29,6 +30,7 @@
 		1B225D1CD1F425CC0F5ADC64 /* CopyHistory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CopyHistory.entitlements; sourceTree = "<group>"; };
 		251704ED33B9276E5F701B74 /* IgnoredAppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IgnoredAppsView.swift; sourceTree = "<group>"; };
 		2F1D6E1F6A233AE49D638940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3357E0290F96DEAC504D0D7F /* BiometricGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricGate.swift; sourceTree = "<group>"; };
 		357E8DF356E2957027C72698 /* ClipRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipRowView.swift; sourceTree = "<group>"; };
 		4CDAAC02F81BE8A4E0D1FA0B /* CopyHistory.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CopyHistory.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6078EB0E8C6C2758D0AE194F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -59,6 +61,7 @@
 		037B1732192E2490E8F4CDBD /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				3357E0290F96DEAC504D0D7F /* BiometricGate.swift */,
 				B9432197DA9F95920AF5DDE8 /* ClipboardMonitor.swift */,
 				D6AE419566432F90BBBC5433 /* CryptoStore.swift */,
 				7B5B5DAD9D5B2F880A34A2A1 /* HotEdgeTrigger.swift */,
@@ -209,6 +212,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C3F0EB05BE7B984947EF66D /* AppDelegate.swift in Sources */,
+				88B5CFED1F80961FB744A13D /* BiometricGate.swift in Sources */,
 				EEA038248722BFAAA118E742 /* ClipRowView.swift in Sources */,
 				0DE14AB7159B0BF0D768FF04 /* ClipboardItem.swift in Sources */,
 				4916E57803FEFDF298BA9F10 /* ClipboardMonitor.swift in Sources */,
@@ -295,7 +299,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CopyHistory/CopyHistory.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = CopyHistory/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -303,7 +307,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.7;
+				MARKETING_VERSION = 1.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.florianbonin.CopyHistory;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -316,7 +320,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CopyHistory/CopyHistory.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = CopyHistory/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -324,7 +328,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.7;
+				MARKETING_VERSION = 1.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.florianbonin.CopyHistory;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;

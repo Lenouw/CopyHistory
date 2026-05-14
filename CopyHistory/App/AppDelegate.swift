@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.hidePanel()
             } else {
                 self.previousApp = NSWorkspace.shared.frontmostApplication
-                self.showPanel(centeredAt: mouseX)
+                self.openPanelWithGate(centeredAt: mouseX)
             }
         }
         hotEdge?.start()
@@ -225,6 +225,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             previousApp = NSWorkspace.shared.frontmostApplication
             let mouseX = NSEvent.mouseLocation.x
+            openPanelWithGate(centeredAt: mouseX)
+        }
+    }
+
+    /// Open panel, gated by biometric auth if required.
+    private func openPanelWithGate(centeredAt mouseX: CGFloat) {
+        if BiometricGate.shared.requiresAuth() {
+            BiometricGate.shared.authenticate { [weak self] success in
+                guard let self, success else { return }
+                self.showPanel(centeredAt: mouseX)
+            }
+        } else {
             showPanel(centeredAt: mouseX)
         }
     }
