@@ -109,8 +109,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private func contextMenu(for item: ClipboardItem) -> some View {
-        Button("Coller") { onPaste?(item) }
-        Button("Copier seulement") { copyToClipboard(item) }
+        Button("Copier") { onPaste?(item) }
         Divider()
         Button(item.isPinned ? "Retirer des favoris" : "Épingler aux favoris") {
             item.isPinned.toggle()

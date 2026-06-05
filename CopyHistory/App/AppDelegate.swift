@@ -327,14 +327,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Direct Paste
 
     private func directPaste(_ item: ClipboardItem) {
+        // Copy only — no auto-paste into active window.
+        // User chose this UX in v1.1.9 : safer, no accidental paste.
         copyToClipboard(item)
         let appToRestore = previousApp
         hidePanel()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-            // Si l'app source a été quittée entretemps, on copie quand même mais on ne paste pas dans le vide
+        // Refocus previous app so user can ⌘V manually right away
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             if let app = appToRestore, !app.isTerminated {
                 app.activate()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.simulatePaste() }
             }
         }
     }

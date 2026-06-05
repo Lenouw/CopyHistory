@@ -6,6 +6,26 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.1.9</title>
+            <pubDate>Thu, 14 May 2026 18:05:00 +0200</pubDate>
+            <sparkle:version>12</sparkle:version>
+            <sparkle:shortVersionString>1.1.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.1.9</h3>
+                <ul>
+                    <li>✂️ Clic sur un élément → copie uniquement dans le presse-papier (plus de collage automatique)</li>
+                    <li>Vous gardez la main : ⌘V quand vous voulez, où vous voulez</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.1.9/CopyHistory-1.1.9.zip"
+                sparkle:edSignature="iuBjiKi0xAo8EP0DdGWSZM5flcd2bKYlyPrbgJixF7gLsks3HjIwJNTwsVhLXIeoaXmkCAHbzy0SmnOttecIAg=="
+                length="2884893"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.8</title>
             <pubDate>Thu, 14 May 2026 17:45:00 +0200</pubDate>
             <sparkle:version>11</sparkle:version>
