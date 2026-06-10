@@ -27,33 +27,30 @@ final class ClipboardItem {
     /// Default `false` pour la compatibilité avec les enregistrements créés avant la 1.1.0.
     var isEncrypted: Bool = false
 
-    /// Cache mémoire du texte déchiffré — évite de re-déchiffrer (AES + base64)
-    /// à chaque accès (recherche, rendu de ligne, dédoublonnage).
-    @Transient private var _textCache: String? = nil
-    @Transient private var _textCacheValid: Bool = false
-
     var clipType: ClipType {
         ClipType(rawValue: rawType) ?? .text
     }
 
-    /// Texte en clair (déchiffré une seule fois puis mis en cache mémoire).
+    /// Cache mémoire EXTERNE du texte déchiffré, keyé par id.
+    /// IMPORTANT : ne PAS stocker le cache sur le @Model (même en @Transient) — toute
+    /// mutation d'une propriété du modèle pendant le rendu déclenche l'observation
+    /// SwiftData et fait re-render la liste en boucle (latence énorme au clic, v1.2.0).
+    private static let textCache = NSCache<NSString, NSString>()
+
+    /// Texte en clair (déchiffré une seule fois puis mis en cache mémoire externe).
     var decryptedText: String? {
-        if _textCacheValid { return _textCache }
-        let result: String?
-        if let raw = textContent {
-            result = isEncrypted ? CryptoStore.decryptString(raw) : raw
-        } else {
-            result = nil
-        }
-        _textCache = result
-        _textCacheValid = true
-        return result
+        guard let raw = textContent else { return nil }
+        guard isEncrypted else { return raw }
+        let key = id.uuidString as NSString
+        if let cached = Self.textCache.object(forKey: key) { return cached as String }
+        guard let decrypted = CryptoStore.decryptString(raw) else { return nil }
+        Self.textCache.setObject(decrypted as NSString, forKey: key)
+        return decrypted
     }
 
     /// Invalide le cache (à appeler si textContent/isEncrypted changent, ex. migration).
     func invalidateTextCache() {
-        _textCache = nil
-        _textCacheValid = false
+        Self.textCache.removeObject(forKey: id.uuidString as NSString)
     }
 
     /// Données image brutes (déchiffrées à la volée si nécessaire).
