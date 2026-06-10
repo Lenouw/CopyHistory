@@ -92,6 +92,16 @@ final class HotEdgeTrigger {
         #endif
     }
 
+    /// macOS désactive silencieusement un tap jugé trop lent (tapDisabledByTimeout)
+    /// ou lors d'une saisie sécurisée (tapDisabledByUserInput). Sans ré-armement,
+    /// le déclencheur bord-bas meurt définitivement jusqu'au redémarrage de l'app.
+    fileprivate func reenableTap() {
+        if let tap = eventTap {
+            CGEvent.tapEnable(tap: tap, enable: true)
+            NSLog("[HotEdge] Tap ré-armé après désactivation système")
+        }
+    }
+
     // MARK: - CGEvent handler (appelé depuis le callback C)
 
     fileprivate func handleCGEvent(_ event: CGEvent) {
@@ -160,10 +170,16 @@ final class HotEdgeTrigger {
 // MARK: - C callback pour CGEventTap (doit être une fonction globale ou let)
 
 private let hotEdgeTapCallback: CGEventTapCallBack = { _, type, event, userInfo in
-    guard type == .scrollWheel, let userInfo else {
+    guard let userInfo else { return Unmanaged.passUnretained(event) }
+    let trigger = Unmanaged<HotEdgeTrigger>.fromOpaque(userInfo).takeUnretainedValue()
+
+    // Le système peut désactiver le tap (timeout / saisie sécurisée) → ré-armer
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        trigger.reenableTap()
         return Unmanaged.passUnretained(event)
     }
-    let trigger = Unmanaged<HotEdgeTrigger>.fromOpaque(userInfo).takeUnretainedValue()
+
+    guard type == .scrollWheel else { return Unmanaged.passUnretained(event) }
     trigger.handleCGEvent(event)
     return Unmanaged.passUnretained(event)
 }

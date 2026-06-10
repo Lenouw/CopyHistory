@@ -61,6 +61,8 @@ final class ClipboardMonitor {
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.checkPasteboard()
         }
+        // Laisse macOS regrouper les réveils du timer → moins de wakeups CPU / batterie
+        timer?.tolerance = 0.15
         RunLoop.main.add(timer!, forMode: .common)
     }
 
@@ -105,13 +107,17 @@ final class ClipboardMonitor {
             }
         }
 
-        // Image
-        if let tiff = pasteboard.data(forType: .tiff) {
-            onNewItem?(.init(type: .image, text: nil, imageData: tiff, filePath: nil, appBundleID: appBundleID, appName: appName))
-            return
-        }
+        // Image — PNG prioritaire (compressé). Un TIFF brut pèse ~10x plus lourd :
+        // base qui gonfle + chiffrement AES + déchiffrement à l'affichage plus lents.
         if let png = pasteboard.data(forType: .png) {
             onNewItem?(.init(type: .image, text: nil, imageData: png, filePath: nil, appBundleID: appBundleID, appName: appName))
+            return
+        }
+        if let tiff = pasteboard.data(forType: .tiff) {
+            // Convertit le TIFF en PNG avant stockage ; fallback TIFF brut si échec
+            let stored = NSBitmapImageRep(data: tiff)?
+                .representation(using: .png, properties: [:]) ?? tiff
+            onNewItem?(.init(type: .image, text: nil, imageData: stored, filePath: nil, appBundleID: appBundleID, appName: appName))
             return
         }
 

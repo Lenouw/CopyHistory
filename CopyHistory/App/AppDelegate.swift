@@ -387,6 +387,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     item.imageData = enc
                 }
                 item.isEncrypted = true
+                item.invalidateTextCache()
                 migrated += 1
                 // Yield to run loop every 50 items to avoid blocking
                 if migrated % 50 == 0 { try? context.save() }
@@ -435,26 +436,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func trimHistory(context: ModelContext) {
+        var didDelete = false
+
+        // fetchOffset → on ne charge en mémoire QUE les items au-delà du cap
+        // (avant : 1000 items complets, blobs images inclus, chargés pour en supprimer 3)
+
         // 1) Cap global sur tous les items non-épinglés
-        let allDescriptor = FetchDescriptor<ClipboardItem>(
+        var allDescriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { !$0.isPinned },
             sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
         )
-        if let all = try? context.fetch(allDescriptor), all.count > maxItemsTotal {
-            all.dropFirst(maxItemsTotal).forEach { context.delete($0) }
+        allDescriptor.fetchOffset = maxItemsTotal
+        if let overflow = try? context.fetch(allDescriptor), !overflow.isEmpty {
+            overflow.forEach { context.delete($0) }
+            didDelete = true
         }
 
-        // 2) Cap spécifique aux images (TIFF/PNG peuvent peser plusieurs MB chacun)
+        // 2) Cap spécifique aux images (peuvent peser plusieurs MB chacune)
         let imageRaw = ClipType.image.rawValue
-        let imgDescriptor = FetchDescriptor<ClipboardItem>(
+        var imgDescriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { !$0.isPinned && $0.rawType == imageRaw },
             sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
         )
-        if let imgs = try? context.fetch(imgDescriptor), imgs.count > maxImageItems {
-            imgs.dropFirst(maxImageItems).forEach { context.delete($0) }
+        imgDescriptor.fetchOffset = maxImageItems
+        if let overflow = try? context.fetch(imgDescriptor), !overflow.isEmpty {
+            overflow.forEach { context.delete($0) }
+            didDelete = true
         }
 
-        try? context.save()
+        if didDelete { try? context.save() }
     }
 }
 

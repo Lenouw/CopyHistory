@@ -6,6 +6,29 @@
         <description>CopyHistory release notes</description>
         <language>fr</language>
         <item>
+            <title>Version 1.2.0</title>
+            <pubDate>Thu, 11 Jun 2026 12:00:00 +0200</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Version 1.2.0 — Performance &amp; fiabilité</h3>
+                <ul>
+                    <li>⚡ <b>Recherche instantanée</b> — le texte déchiffré est mis en cache (plus de re-déchiffrement AES à chaque frappe)</li>
+                    <li>🛡️ <b>Déclencheurs auto-réparés</b> — le bord bas et la file de collage se ré-arment automatiquement si macOS les désactive (cause des pannes silencieuses)</li>
+                    <li>🖼️ Scroll fluide — icônes d'apps et miniatures d'images en cache</li>
+                    <li>📦 Images stockées en PNG (~10x plus léger que TIFF) — base plus compacte</li>
+                    <li>🔋 Nettoyage d'historique optimisé + moins de réveils CPU</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/Lenouw/CopyHistory/releases/download/v1.2.0/CopyHistory-1.2.0.zip"
+                sparkle:edSignature="syoDSdub38xCatbA/NPfVzOqAOAwKkvvrI5BRIrPzmRjbTb7J4dktuSCAREKmunmGkOWKHRTGPD5mR0JfFT1DQ=="
+                length="2889510"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
             <title>Version 1.1.9</title>
             <pubDate>Thu, 14 May 2026 18:05:00 +0200</pubDate>
             <sparkle:version>12</sparkle:version>

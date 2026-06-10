@@ -124,6 +124,15 @@ final class PasteQueueManager: ObservableObject {
         NSLog("[PasteQueue] EventTap stopped")
     }
 
+    /// Ré-arme le tap si macOS l'a désactivé (timeout / saisie sécurisée).
+    /// Sans ça, la file de collage cesse de fonctionner silencieusement.
+    fileprivate func reenableTap() {
+        if let tap = eventTap {
+            CGEvent.tapEnable(tap: tap, enable: true)
+            NSLog("[PasteQueue] Tap ré-armé après désactivation système")
+        }
+    }
+
     // MARK: - Event handler (called synchronously from C callback on main thread)
 
     fileprivate func handleKeyEvent(_ event: CGEvent) {
@@ -143,12 +152,17 @@ final class PasteQueueManager: ObservableObject {
 // MARK: - C callback (global function required by CGEventTap API)
 
 private let pasteQueueTapCallback: CGEventTapCallBack = { _, type, event, userInfo -> Unmanaged<CGEvent>? in
-    guard type == .keyDown, let userInfo else {
-        return Unmanaged.passUnretained(event)
-    }
+    guard let userInfo else { return Unmanaged.passUnretained(event) }
     let manager = Unmanaged<PasteQueueManager>.fromOpaque(userInfo).takeUnretainedValue()
+
     // Callback fires on main thread (tap added to CFRunLoopGetMain), so direct call is safe.
     // MainActor isolation: we're already on main, use a synchronous bridge.
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        MainActor.assumeIsolated { manager.reenableTap() }
+        return Unmanaged.passUnretained(event)
+    }
+
+    guard type == .keyDown else { return Unmanaged.passUnretained(event) }
     MainActor.assumeIsolated {
         manager.handleKeyEvent(event)
     }

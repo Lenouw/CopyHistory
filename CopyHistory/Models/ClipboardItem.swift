@@ -27,17 +27,33 @@ final class ClipboardItem {
     /// Default `false` pour la compatibilité avec les enregistrements créés avant la 1.1.0.
     var isEncrypted: Bool = false
 
+    /// Cache mémoire du texte déchiffré — évite de re-déchiffrer (AES + base64)
+    /// à chaque accès (recherche, rendu de ligne, dédoublonnage).
+    @Transient private var _textCache: String? = nil
+    @Transient private var _textCacheValid: Bool = false
+
     var clipType: ClipType {
         ClipType(rawValue: rawType) ?? .text
     }
 
-    /// Texte en clair (déchiffre à la volée si nécessaire).
+    /// Texte en clair (déchiffré une seule fois puis mis en cache mémoire).
     var decryptedText: String? {
-        guard let raw = textContent else { return nil }
-        if isEncrypted {
-            return CryptoStore.decryptString(raw)
+        if _textCacheValid { return _textCache }
+        let result: String?
+        if let raw = textContent {
+            result = isEncrypted ? CryptoStore.decryptString(raw) : raw
+        } else {
+            result = nil
         }
-        return raw
+        _textCache = result
+        _textCacheValid = true
+        return result
+    }
+
+    /// Invalide le cache (à appeler si textContent/isEncrypted changent, ex. migration).
+    func invalidateTextCache() {
+        _textCache = nil
+        _textCacheValid = false
     }
 
     /// Données image brutes (déchiffrées à la volée si nécessaire).
