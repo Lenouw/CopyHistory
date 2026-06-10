@@ -38,6 +38,14 @@ Pattern appliqué dans HotEdgeTrigger.swift et PasteQueueManager.swift (v1.2.0).
 
 Toute propriété calculée qui déchiffre (`decryptedText`) est appelée à CHAQUE accès : recherche (1000 items × chaque frappe), rendu de liste, dédoublonnage. Cache mémoire obligatoire via `@Transient` sur le @Model. Idem pour les ressources coûteuses en vue (icônes NSWorkspace, miniatures d'images) → `NSCache` statique.
 
+## 2026-06-11 | SwiftData @Model : JAMAIS muter une propriété dans un getter pendant le render
+
+**Symptôme** : latence énorme au clic sur une ligne. Régression v1.2.0 → fix v1.2.1.
+
+**Cause** : cache de déchiffrement stocké en `@Transient` SUR le @Model, écrit dans le getter `decryptedText`. SwiftData (macro `@Observable`) track les mutations de TOUTE propriété stockée, y compris `@Transient`. Écrire le cache pendant l'évaluation du `body` SwiftUI → invalide la vue → re-render → getter rappelé → ré-écrit le cache → boucle. Chaque clic reconstruit la liste entière.
+
+**Règle** : un getter sur un `@Model` SwiftData doit être PUR (aucune écriture de propriété du modèle). Pour cacher un résultat coûteux (déchiffrement, etc.), utiliser un cache EXTERNE (`NSCache` statique keyé par `id`), jamais une propriété du modèle. `@Transient` n'exclut PAS de l'observation — seulement de la persistance.
+
 ## Workflow release CopyHistory (référence)
 
 1. Bump `MARKETING_VERSION` + `CURRENT_PROJECT_VERSION` dans `project.yml`
