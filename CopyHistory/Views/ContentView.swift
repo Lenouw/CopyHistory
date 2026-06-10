@@ -3,34 +3,34 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \ClipboardItem.createdAt, order: .reverse) private var items: [ClipboardItem]
 
     @State private var searchText = ""
-    @State private var selectedID: UUID?
+    @State private var debouncedSearch = ""
+    @State private var debounceWork: DispatchWorkItem?
+    @State private var totalCount = 0
 
     var onPaste: ((ClipboardItem) -> Void)?
     var onToggleQueue: (() -> Void)?
-
-    private var filteredItems: [ClipboardItem] {
-        let pool = searchText.isEmpty ? Array(items.prefix(300)) : items
-        guard !searchText.isEmpty else { return pool }
-        return pool.filter { item in
-            item.displayText.localizedCaseInsensitiveContains(searchText)
-            || (item.customLabel?.localizedCaseInsensitiveContains(searchText) == true)
-            || (item.appName?.localizedCaseInsensitiveContains(searchText) == true)
-        }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             searchBar
             Divider()
-            clipList
+            // Liste isolée : construit son propre @Query (limité hors recherche).
+            // Le @Query reste DANS cette sous-vue pour ne pas matérialiser tout
+            // l'historique à chaque re-render de ContentView.
+            ClipListView(search: debouncedSearch,
+                         onPaste: onPaste)
             Divider()
             footer
         }
         .frame(minWidth: 380, minHeight: 480)
         .background(Color(NSColor.windowBackgroundColor))
+        .onAppear(perform: refreshCount)
+    }
+
+    private func refreshCount() {
+        totalCount = (try? modelContext.fetchCount(FetchDescriptor<ClipboardItem>())) ?? 0
     }
 
     // MARK: - Subviews
@@ -43,8 +43,21 @@ struct ContentView: View {
             TextField("Rechercher dans l'historique…", text: $searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14))
+                .onChange(of: searchText) { _, new in
+                    // Debounce : on ne relance le fetch « tout l'historique »
+                    // qu'après 0.2s d'inactivité de frappe.
+                    debounceWork?.cancel()
+                    let trimmed = new.trimmingCharacters(in: .whitespaces)
+                    let work = DispatchWorkItem { debouncedSearch = trimmed }
+                    debounceWork = work
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+                }
             if !searchText.isEmpty {
-                Button { searchText = "" } label: {
+                Button {
+                    searchText = ""
+                    debounceWork?.cancel()
+                    debouncedSearch = ""
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
                 }
@@ -55,38 +68,9 @@ struct ContentView: View {
         .padding(.vertical, 9)
     }
 
-    @ViewBuilder
-    private var clipList: some View {
-        if filteredItems.isEmpty {
-            VStack(spacing: 10) {
-                Image(systemName: searchText.isEmpty ? "clipboard" : "magnifyingglass")
-                    .font(.system(size: 28))
-                    .foregroundColor(.secondary)
-                Text(searchText.isEmpty ? "Aucun élément" : "Aucun résultat pour « \(searchText) »")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 13))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(filteredItems, id: \.id) { item in
-                        ClipRowView(item: item, isSelected: selectedID == item.id)
-                            .onTapGesture {
-                                selectedID = item.id
-                                onPaste?(item)
-                            }
-                            .contextMenu { contextMenu(for: item) }
-                        Divider().padding(.leading, 44)
-                    }
-                }
-            }
-        }
-    }
-
     private var footer: some View {
         HStack(spacing: 8) {
-            Text("\(items.count) élément\(items.count > 1 ? "s" : "")")
+            Text("\(totalCount) élément\(totalCount > 1 ? "s" : "")")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
 
@@ -105,7 +89,82 @@ struct ContentView: View {
         .padding(.vertical, 12)
     }
 
-    // MARK: - Context menu
+    // MARK: - Actions
+
+    private func clearAll() {
+        // Supprime tous les non-épinglés sans matérialiser la liste dans la vue :
+        // fetch ponctuel + delete.
+        let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { !$0.isPinned })
+        if let all = try? modelContext.fetch(descriptor) {
+            all.forEach { modelContext.delete($0) }
+            try? modelContext.save()
+        }
+        refreshCount()
+    }
+}
+
+// MARK: - Clip list (owns the bounded @Query)
+
+private struct ClipListView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var items: [ClipboardItem]
+
+    let search: String
+    var onPaste: ((ClipboardItem) -> Void)?
+
+    /// Nombre d'items chargés en vue par défaut (hors recherche).
+    private static let defaultLimit = 150
+
+    init(search: String, onPaste: ((ClipboardItem) -> Void)?) {
+        self.search = search
+        self.onPaste = onPaste
+
+        var descriptor = FetchDescriptor<ClipboardItem>(
+            sortBy: [SortDescriptor(\ClipboardItem.createdAt, order: .reverse)]
+        )
+        // Hors recherche : on ne charge que les N plus récents.
+        // En recherche : pas de limite → on fouille tout l'historique.
+        if search.isEmpty {
+            descriptor.fetchLimit = Self.defaultLimit
+        }
+        _items = Query(descriptor)
+    }
+
+    /// Filtrage en mémoire (le texte est chiffré sur disque, impossible à pousser
+    /// dans un #Predicate SwiftData). Déchiffrement caché → une seule passe par item.
+    private var displayed: [ClipboardItem] {
+        guard !search.isEmpty else { return items }
+        return items.filter { item in
+            item.displayText.localizedCaseInsensitiveContains(search)
+            || (item.customLabel?.localizedCaseInsensitiveContains(search) == true)
+            || (item.appName?.localizedCaseInsensitiveContains(search) == true)
+        }
+    }
+
+    var body: some View {
+        if displayed.isEmpty {
+            VStack(spacing: 10) {
+                Image(systemName: search.isEmpty ? "clipboard" : "magnifyingglass")
+                    .font(.system(size: 28))
+                    .foregroundColor(.secondary)
+                Text(search.isEmpty ? "Aucun élément" : "Aucun résultat pour « \(search) »")
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 13))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(displayed, id: \.id) { item in
+                        ClipRowView(item: item, isSelected: false)
+                            .onTapGesture { onPaste?(item) }
+                            .contextMenu { contextMenu(for: item) }
+                        Divider().padding(.leading, 44)
+                    }
+                }
+            }
+        }
+    }
 
     @ViewBuilder
     private func contextMenu(for item: ClipboardItem) -> some View {
@@ -116,27 +175,6 @@ struct ContentView: View {
         }
         Divider()
         Button("Supprimer", role: .destructive) {
-            modelContext.delete(item)
-        }
-    }
-
-    // MARK: - Actions
-
-    func copyToClipboard(_ item: ClipboardItem) {
-        let pb = NSPasteboard.general
-        pb.clearContents()
-        switch item.clipType {
-        case .text, .url, .rtf, .file:
-            pb.setString(item.decryptedText ?? item.filePath ?? "", forType: .string)
-        case .image:
-            if let data = item.decryptedImageData, let img = NSImage(data: data) {
-                pb.writeObjects([img])
-            }
-        }
-    }
-
-    private func clearAll() {
-        for item in items where !item.isPinned {
             modelContext.delete(item)
         }
     }
